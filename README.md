@@ -57,7 +57,7 @@ Trust us, you will have many (Python) projects where a nice IDE is a real gamech
 ## Development setup
 You have to set the correct PythonPath when executing the tests to the base directory of this project.
 The PythonPath is the base path for the Python interpreter, which is used for resolving imports.
-When you are executing the `run.py` file from the project root, you most likely will not have to modify your PythonPath.
+When you are executing the `main.py` file from the project root, you most likely will not have to modify your PythonPath.
 
 In order to execute this project, you have to have a recent Python Interpreter (we recommend at least Python 3.6, 3.5 should work as well, Python 2 is not working) with pip (normally installed along).
 Also you have to install all the project requirements stated in `requirements.txt`.
@@ -79,7 +79,7 @@ In our case you can navigate through the foreign keys from one side by accessing
 Pro tip: We recommend you to use a Python venv (check this out), but it should work "native" as well.
 
 ## Run the API
-To run the API simply execute `python3 run.py` in project root.
+To run the API simply execute `python3 main.py` in project root.
 
 After successful starting (you should see something like this in your terminal):
 
