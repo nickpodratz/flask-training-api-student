@@ -1,0 +1,207 @@
+openapi: "3.0.0"
+info:
+  description: "This is the API definition for the Flask Training API."
+  version: "1.0.0"
+  title: "Flask Training API"
+  contact:
+    email: "leonard@marschke.me"
+servers:
+  - url: "https://someserver/v1"
+
+paths:
+  /health:
+    get:
+      summary: Gets service health
+      responses:
+        200:
+          description: Service operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        503:
+          description: Service not operational
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /images:
+    get:
+      summary: Get saved images
+      description: To use pagination check out query parameters.
+      parameters:
+        - name: limit
+          in: query
+          description: Limits the response size, defaults to 100, minimum 1, maximum 500
+          schema:
+            type: integer
+            minimum: 1
+            default: 100
+            maximum: 500
+            description: Maximal number of images
+        - name: offset
+          in: query
+          description: Skips the beginning of the sorted response
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+            description: Number of images to skip
+      responses:
+        200:
+          description: Mail content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  images:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Image'
+                  count:
+                    type: number
+                    format: uint
+                    description: Count of all images available
+        400:
+          $ref: '#/components/responses/InvalidArgument'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /images/{imageId}:
+    get:
+      summary: Get metadata of image
+      parameters:
+        - $ref: '#/components/parameters/ImageId'
+      responses:
+        200:
+          description: Mail metadata
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image:
+                    $ref: '#/components/schemas/Image'
+        404:
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /images/{imageId}/bitmap:
+    get:
+      summary: Get bitmap of image
+      parameters:
+        - $ref: '#/components/parameters/ImageId'
+      responses:
+        200:
+          description: Bitmap
+          content:
+            image:
+              schema:
+                type: string
+                format: binary
+                description: Image bitmap
+        404:
+          $ref: '#/components/responses/NotFound'
+        default:
+          $ref: '#/components/responses/Error'
+
+  /images/fetch:
+    post:
+      summary: Fetches image DB
+      description: Should fetch images from https://image-annotations.marschke.me/NAACL/. Operation must be idempotent.
+      responses:
+        200:
+          description: Mail successfully saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Finish status
+                    example: 'finished'
+        default:
+          $ref: '#/components/responses/Error'
+
+
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Current status of the service
+        message:
+          type: string
+          description: Explaining the current status
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: the error message
+    Image:
+      type: object
+      properties:
+        id:
+          type: number
+          format: uint
+          example: 30
+        category:
+          type: string
+          description: Category of image
+          example: 'somecategory'
+        captions:
+          type: array
+          description: Captions for this image
+          items:
+            type: object
+            properties:
+              text:
+                type: string
+                description: Caption text
+
+  responses:
+    Error:
+      description: Unknown Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InvalidArgument:
+      description: Invalid argument passed, see message field for more information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Request was unable to be completed, due to semantic errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  parameters:
+    ImageId:
+      name: imageId
+      in: path
+      description: The image Id
+      required: true
+      schema:
+        type: number
+        format: uint
+        example: 23

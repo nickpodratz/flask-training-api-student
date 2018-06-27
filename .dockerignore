@@ -1,0 +1,10 @@
+*
+
+!main.py
+
+!app
+!util
+
+!application.cfg
+!requirements.txt
+!uwsgi.ini

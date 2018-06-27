@@ -1,0 +1,55 @@
+image: lmmdock/build-environment
+
+stages:
+  - test
+  - build
+  - deploy
+
+before_script:
+  - mkdir -p build
+
+python-style:
+  stage: test
+  script:
+    - wget https://sre18.pages.rechenknecht.net/misc/pylintrc -O .pylintrc
+    - pip3 install -r requirements.txt
+    - pip3 install pylint
+    - pylint main.py app tests util
+
+python-test:
+  stage: test
+  script:
+    - pip3 install -r requirements.txt
+    - pip3 install coverage
+    - coverage run --branch --omit='tests/*','*/site-packages/*','*/dist-packages/*' -m unittest discover -p 'Test*.py'
+    - coverage html -d build/coverage
+    - coverage report
+  coverage: '/^TOTAL.*?(\d{1,3})%$/'
+  artifacts:
+    paths:
+      - build/coverage
+    expire_in: 1 week
+
+build-api-definition:
+  stage: build
+  image: node:10
+  script:
+    - yarn global add api2html
+    - mkdir -p build/api
+    - api2html docs/api-definition.yml -o build/api/index.html
+  artifacts:
+    paths:
+      - build/api
+    expire_in: 1 week
+
+pages:
+  stage: deploy
+  script:
+    - mkdir -p public
+    - cp -av build/api public/api
+  only:
+    - master
+  artifacts:
+    paths:
+      - public
+    expire_in: 1 week
