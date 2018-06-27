@@ -65,7 +65,7 @@ def get_tasks():
 
 @V1.route('/answers', methods=['GET'])
 def get_answers():
-    return json.dumps({
+    result = {
         'Is a REST API bound to a single exchange format like JSON? How can multiple formats be used? (1 Point)':
             '',
         'Are all operations on this REST APIs idempotent? Explain why! (1 Point)':
@@ -83,7 +83,13 @@ def get_answers():
             'Please write down your matriculation number at top of this file.',
             'Please add a comment at top of this file how much time you needed for this assignment (please be honest).',
         ]
-    })
+    }
+
+    for key in result:
+        if key != 'Hand in requirements (1 Point)':
+            result[key] = '[Solution hidden] Hey, what are you searching? A solution? Tzz. ;)'
+
+    return json.dumps(result), 200
 
 
 # TODO implement missing routes

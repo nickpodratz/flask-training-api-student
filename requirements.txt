@@ -4,3 +4,4 @@ flask_testing~=0.6.1
 https://lmm.pages.rechenknecht.net/flask-common/flask_common.tgz
 https://bpdbsystel.pages.rechenknecht.net/peewee-common/peewee_common.tgz
 lxml~=4.2.2
+raven[flask]~=6.8

@@ -2,6 +2,7 @@ from flask_common.flask import Flask
 from flask_common.util import register_cors_headers
 from peewee_common.Database import Holder
 
+from util import sentry
 
 flask = Flask(__name__)
 flask.config.from_pyfile("../application.cfg")
@@ -20,3 +21,4 @@ flask.register_blueprint(V1)
 
 register_cors_headers(flask, allowOrigin=lambda _: True, allowCredentials=False,
                       allowedHeaders='Content-Type,cache-control,x-requested-with')
+sentry.setup(flask)
