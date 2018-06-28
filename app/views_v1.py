@@ -67,11 +67,17 @@ def get_tasks():
 def get_answers():
     result = {
         'Is a REST API bound to a single exchange format like JSON? How can multiple formats be used? (1 Point)':
-            '',
+            'It is not! The client can request a particular format using the \'Accepts\' request-header-field and the server.'
+            'can specify the format of his reponse in the response\'s header-field \'Content-Type\'.',
         'Are all operations on this REST APIs idempotent? Explain why! (1 Point)':
-            '',
+            'No. The POST request is not idempotent because it is supposed to create and insert a new value into the'
+            'underlying persistent store. Thereby two POST requests to an endpoint of /users would create two'
+            'users who both hold their distinct user-id.',
         'Why could it be problematic to work with full URLs as links? Name and explain two reasons (2 Points)': [
-            '',
+            'Without a proper abstraction of the endpoint tree, it could be difficult to maintain consistency in such cases'
+            'where the API designers decide to change the routing scheme or even the base url. With relative URLs, this does'
+            'not occur as the containing subtree of the routing model can be reattached somewhere else and relative routing'
+            'within this subtree would continue to work',
         ],
         'Hand in requirements (1 Point)': [
             'ZIP the complete source code directly from the root directory (so no useless subdirs in ZIP please)',
