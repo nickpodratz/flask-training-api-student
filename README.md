@@ -61,7 +61,7 @@ When you are executing the `main.py` file from the project root, you most likely
 
 In order to execute this project, you have to have a recent Python Interpreter (we recommend at least Python 3.6, 3.5 should work as well, Python 2 is not working) with pip (normally installed along).
 Also you have to install all the project requirements stated in `requirements.txt`.
-You can do so by executing `pip3 install -r requirements.txt` in your project folder.
+You can do so by executing `pip3 install -r requirements.txt --no-cache-dir` in your project folder.
 
 Please take note that you will use `lxml` later on in the project.
 `lxml` is a Python wrapper for `libxml`, which allows you to parse XML files easily.
