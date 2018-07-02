@@ -8,7 +8,7 @@
 import json
 import re
 
-from lxml import html
+from lxml import html, etree
 
 import requests
 from flask import Blueprint, request, Response
@@ -123,27 +123,50 @@ def update_image_storage():
     """
 
     # TODO get BASE_URL_DATASET, we would suggest requests for it (already installed) Think about error handling.
-    answer = requests.get(BASE_URL_DATASET)
-    # Error handling
+    try:
+        page = requests.get(BASE_URL_DATASET)
+    except requests.exceptions.Timeout:
+        print('A timeout occured.')
+        # Maybe set up for a retry, or continue in a retry loop
+    except requests.exceptions.TooManyRedirects:
+        print('Too many redirects were made.')
+        # Tell the user their URL was bad and try a different one
+    except requests.exceptions.RequestException as e:
+        print('An error occured', e)
+        # catastrophic error. bail.
+        sys.exit(1)
+
+
+    logvar = 'testvalue 2'
 
     # TODO Please explain what this line is doing. Why is it needed? In which case? (directly here as comment)
+    # The `with` keyword guarantees that some cleanup routine for the to-be-executed routine is implicitly run
+    # after the scope exits. In this particular case, the clean-up-routine is the return statement, such that
+    # the 'status': 'finished' value is guaranteed to be sent together with the 200 status code.
     with database_holder.database.transaction():
         # Empty databases
         Image.delete().execute()  # pylint: disable=no-value-for-parameter
         Caption.delete().execute()  # pylint: disable=no-value-for-parameter
 
         # TODO We encourage you to use the html.fromstring method provided by the lxml package (already installed).
-        tree = None
+        tree = html.fromstring(page.content)
+        
+        # "status": "/html/body/table/tr[1000]/td[2]/table/tr[5]/td"
+        logvar = tree
+
+#        for element in tree.iter():
+#            logvar = element.getroottree().getpath(element)
 
         # TODO After parsing the XML tree, please use the xpath method to iterate over all elements
-        for pictureTree in tree.xpath(''):
-
+        for pictureTree in tree.xpath('/html/body/table[1]'):
             # TODO get image src by xpath method, you can check lxml documentation or use a debugger to find attributes
-            src = None
+            src = pictureTree.xpath('tr/td/img@src')
 
             # TODO parse category by appling a regex to src, probably check out regex101.com
             # check out re docs of Python3
-            category = None
+            # '.+?(?=\/)' : searches for substring before `/`
+            # '|$' : falls back to empty string as default
+            category = re.search('.+?(?=\/)|$', src)
 
             # save Image in DB, nothing magical here
             imageDb = Image(src=src, category=category)
@@ -151,8 +174,9 @@ def update_image_storage():
 
             # TODO iterate over all captions by using xpath method. Try to make the xpath expression as short as
             # possible
-            for captionTree in []:
-                caption_text = ''
+
+            for captionTree in pictureTree.xpath('tr/tr/td'):
+                caption_text = captionTree.xpath('/string()');
                 Caption(text=caption_text, image=imageDb).save()
 
-    return json.dumps({'status': 'finished'}), 200
+    return json.dumps({'status': '{0}'.format(logvar)}), 200
