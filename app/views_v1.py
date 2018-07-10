@@ -142,22 +142,8 @@ def uint(intString):
 
 @V1.route('/images', methods=['GET'])
 def get_image_paginated():
-    try:
-        # read limit parameter and check its constraints
-        limit = request.args.get('limit', '100')
-        limit = uint(limit)
-        if limit < 1 or limit > 500:
-            raise ValueError('out of range')
-    except ValueError:
-        return apiError(APIError.InvalidArgument, 'limit should be of type uint in range of 1 to 500 (inclusive) (was \'{}\')'.format(limit))
-    try:
-        # read offset parameter and check its constraints
-        offset = request.args.get('offset', '0')
-        offset = uint(offset)
-    except ValueError:
-        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(offset))
-
-    # query database
+    limit = uint(request.args.get('limit', '100'))
+    offset = uint(request.args.get('offset', '0'))
     count = Image.select().count()
     images = Image.select().order_by(Image.id).limit(limit).offset(offset)
 
@@ -170,21 +156,15 @@ def get_image_paginated():
 @V1.route('images/<imageId>', methods=['GET'])
 def get_image_metadata(imageId):
     try:
-        # read imageId parameter and check its constraints
-        imageId = int(imageId)
-    except ValueError:
-        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(imageId))
-    try:
-        # query database by id and serialize it to json
-        image = Image.get_by_id(imageId)
+        image_id = int(image_id)
+        image = Image.get_by_id(image_id)
         return json.dumps(image.to_serializable()), 200
     except ValueError:
-        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(imageId))
+        return apiError(APIError.InvalidArgument, 'image_id should be of type uint (was \'{}\')'.format(image_id))
     except Image.DoesNotExist:
         return apiError(APIError.NotFound)
     except:
         return apiError(APIError.Error)
-
 
 
 @V1.route('images/<image_id>/bitmap', methods=['GET'])
