@@ -137,8 +137,6 @@ def update_image_storage():
         sys.exit(1)
 
 
-    logvar = 'testvalue 2'
-
     # TODO Please explain what this line is doing. Why is it needed? In which case? (directly here as comment)
     # The `with` keyword guarantees that some cleanup routine for the to-be-executed routine is implicitly run
     # after the scope exits. In this particular case, the clean-up-routine is the return statement, such that
@@ -149,34 +147,43 @@ def update_image_storage():
         Caption.delete().execute()  # pylint: disable=no-value-for-parameter
 
         # TODO We encourage you to use the html.fromstring method provided by the lxml package (already installed).
-        tree = html.fromstring(page.content)
+        tree = html.fromstring(page.text)
         
         # "status": "/html/body/table/tr[1000]/td[2]/table/tr[5]/td"
-        logvar = tree
-
-#        for element in tree.iter():
-#            logvar = element.getroottree().getpath(element)
+        
+        pictureTrees = tree.xpath('/html/body/table/tr');
 
         # TODO After parsing the XML tree, please use the xpath method to iterate over all elements
-        for pictureTree in tree.xpath('/html/body/table[1]'):
-            # TODO get image src by xpath method, you can check lxml documentation or use a debugger to find attributes
-            src = pictureTree.xpath('tr/td/img@src')
+        for index, pictureTree in enumerate(pictureTrees, start=1):
+            
+            # print('processing pictureTree #', index);
+                   
+            # Extract the source attribute
+            src = next(iter(pictureTree.xpath('td[1]/img/@src')), None)
+            if src == None:
+                continue  # skip entry if no image is in row
 
-            # TODO parse category by appling a regex to src, probably check out regex101.com
-            # check out re docs of Python3
-            # '.+?(?=\/)' : searches for substring before `/`
-            # '|$' : falls back to empty string as default
-            category = re.search('.+?(?=\/)|$', src)
+            # print('src is ', src);
 
-            # save Image in DB, nothing magical here
+            # Take only substring with category descriptor
+            category = re.match('^(\w.*)\/', src).group(1)
+            if category == None:
+                continue  # skip entry if category could can't be extracted
+            
+            # print('category is ', category);
+
+            # Save Image in DB, nothing magical here
             imageDb = Image(src=src, category=category)
             imageDb.save()
 
-            # TODO iterate over all captions by using xpath method. Try to make the xpath expression as short as
-            # possible
+            # print('saved image entry!');
 
-            for captionTree in pictureTree.xpath('tr/tr/td'):
-                caption_text = captionTree.xpath('/string()');
+            # Save the captions additionally
+            for captionTree in pictureTree.xpath('td[2]/table/*/td/text()'):
+                # Remove whitespaces on edges
+                caption_text = captionTree.strip()
                 Caption(text=caption_text, image=imageDb).save()
+                
+                # print('Added caption', caption_text);
 
-    return json.dumps({'status': '{0}'.format(logvar)}), 200
+    return json.dumps({'status': 'finished'}), 200
