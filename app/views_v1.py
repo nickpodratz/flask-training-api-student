@@ -2,7 +2,7 @@
 # pylint: disable=fixme
 
 # **It took me ? hours to solve this assignment.**
-# Solved by (Matrikelnummern): 785812, 786181
+# Solved by (Matrikelnummern): 785812, 786191
 
 
 import json
@@ -74,7 +74,7 @@ def get_answers():
             'It is not! The client can request a particular format using the \'Accepts\' request-header-field and the server.'
             'can specify the format of his reponse in the response\'s header-field \'Content-Type\'.',
         'Are all operations on this REST APIs idempotent? Explain why! (1 Point)':
-            'No. The POST request is not idempotent because it is supposed to create and insert a new value into the'
+            'Yes. As specified in the API, even the POST request is idempotent. Normally, this request is not idempotent because it is supposed to create and insert a new value into the'
             'underlying persistent store. Thereby two POST requests to an endpoint of /users would create two'
             'users who both hold their distinct user-id.',
         'Why could it be problematic to work with full URLs as links? Name and explain two reasons (2 Points)': [
