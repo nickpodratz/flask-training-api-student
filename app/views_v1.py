@@ -111,6 +111,32 @@ def get_answers():
 # You can access GET arguments by request.args.get('key', 'default') where request is a global object defined by Flask
 
 
+
+@V1.route('images/<image_id>/bitmap', methods=['GET'])
+def get_image_bitmap(image_id):
+    try:
+        # read get_image_bitmap parameter and check its constraints
+        image_id = int(image_id)
+    except ValueError:
+        return apiError(APIError.InvalidArgument, 'image_id is of type \'{}\', but should be an uint.)'.format(image_id))
+    try:
+        # Construct url from params
+        image = Image.get_by_id(image_id)
+        source = BASE_URL_DATASET + image.src
+        response = requests.get(source)
+
+        headers = dict(filter(
+            lambda header: header[0] in [
+                'Content-Type', 'ETag', 'Last-Modified'],
+            response.headers.items()
+        ))
+        return response.content, 200, headers
+    except Image.DoesNotExist:
+        return apiError(APIError.NotFound)
+    except:
+        return apiError(APIError.Error)
+
+
 @V1.route('/images/fetch', methods=['POST'])
 def update_image_storage():
     """This operation should clear DB if run multiple times on the same DB
