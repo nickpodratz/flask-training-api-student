@@ -8,7 +8,11 @@
 import json
 import re
 
-from lxml import html, etree
+from lxml import html
+
+from enum import Enum
+import re
+import json
 
 import requests
 from flask import Blueprint, request, Response
@@ -109,6 +113,77 @@ def get_answers():
 # If using pylint please add # pylint: disable=no-value-for-parameter to the end of the line.
 #
 # You can access GET arguments by request.args.get('key', 'default') where request is a global object defined by Flask
+
+# enum defining api errors from the api definition and our own
+class APIError(Enum):
+    Error = {'message': 'Unknown Error', 'statusCode': 500}
+    InvalidArgument = {'message': 'Invalid argument: {}', 'statusCode': 400}
+    NotFound = {'message': 'Not found', 'statusCode': 404}
+    UnprocessableEntity = {'message': 'Invalid request', 'statusCode': 400}
+    NotImplemented = {
+        'message': 'This endpoint is not yet implemented.', 'statusCode': 501}
+    ServiceUnavailable = {
+        'message': 'service unavailable at the moment, try again later ({})', 'statusCode': 503}
+
+# returns route response for an api error (with additional message)
+def apiError(apiError, message='', statusCode=None):
+    error = apiError.value
+    return json.dumps({
+        'message': error['message'].format(message)
+    }), error['statusCode'] if statusCode is None else statusCode
+
+# parses string as uint
+def uint(intString):
+    parsedInt = int(intString)
+    if parsedInt < 0:
+        raise ValueError('value should be unsigned')
+    return parsedInt
+
+
+@V1.route('/images', methods=['GET'])
+def get_image_paginated():
+    try:
+        # read limit parameter and check its constraints
+        limit = request.args.get('limit', '100')
+        limit = uint(limit)
+        if limit < 1 or limit > 500:
+            raise ValueError('out of range')
+    except ValueError:
+        return apiError(APIError.InvalidArgument, 'limit should be of type uint in range of 1 to 500 (inclusive) (was \'{}\')'.format(limit))
+    try:
+        # read offset parameter and check its constraints
+        offset = request.args.get('offset', '0')
+        offset = uint(offset)
+    except ValueError:
+        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(offset))
+
+    # query database
+    count = Image.select().count()
+    images = Image.select().order_by(Image.id).limit(limit).offset(offset)
+
+    return json.dumps({
+        'images': list(map(lambda image: image.to_serializable(), images)),
+        'count': count
+    }), 200
+
+
+@V1.route('images/<imageId>', methods=['GET'])
+def get_image_metadata(imageId):
+    try:
+        # read imageId parameter and check its constraints
+        imageId = int(imageId)
+    except ValueError:
+        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(imageId))
+    try:
+        # query database by id and serialize it to json
+        image = Image.get_by_id(imageId)
+        return json.dumps(image.to_serializable()), 200
+    except ValueError:
+        return apiError(APIError.InvalidArgument, 'imageId should be of type uint (was \'{}\')'.format(imageId))
+    except Image.DoesNotExist:
+        return apiError(APIError.NotFound)
+    except:
+        return apiError(APIError.Error)
 
 
 
