@@ -114,58 +114,6 @@ def get_answers():
 #
 # You can access GET arguments by request.args.get('key', 'default') where request is a global object defined by Flask
 
-# enum defining api errors from the api definition and our own
-class APIError(Enum):
-    Error = {'message': 'Unknown Error', 'statusCode': 500}
-    InvalidArgument = {'message': 'Invalid argument: {}', 'statusCode': 400}
-    NotFound = {'message': 'Not found', 'statusCode': 404}
-    UnprocessableEntity = {'message': 'Invalid request', 'statusCode': 400}
-    NotImplemented = {
-        'message': 'This endpoint is not yet implemented.', 'statusCode': 501}
-    ServiceUnavailable = {
-        'message': 'service unavailable at the moment, try again later ({})', 'statusCode': 503}
-
-# returns route response for an api error (with additional message)
-def apiError(apiError, message='', statusCode=None):
-    error = apiError.value
-    return json.dumps({
-        'message': error['message'].format(message)
-    }), error['statusCode'] if statusCode is None else statusCode
-
-# parses string as uint
-def uint(intString):
-    parsedInt = int(intString)
-    if parsedInt < 0:
-        raise ValueError('value should be unsigned')
-    return parsedInt
-
-
-@V1.route('/images', methods=['GET'])
-def get_image_paginated():
-    limit = uint(request.args.get('limit', '100'))
-    offset = uint(request.args.get('offset', '0'))
-    count = Image.select().count()
-    images = Image.select().order_by(Image.id).limit(limit).offset(offset)
-
-    return json.dumps({
-        'images': list(map(lambda image: image.to_serializable(), images)),
-        'count': count
-    }), 200
-
-
-@V1.route('images/<imageId>', methods=['GET'])
-def get_image_metadata(imageId):
-    try:
-        image_id = int(image_id)
-        image = Image.get_by_id(image_id)
-        return json.dumps(image.to_serializable()), 200
-    except ValueError:
-        return apiError(APIError.InvalidArgument, 'image_id should be of type uint (was \'{}\')'.format(image_id))
-    except Image.DoesNotExist:
-        return apiError(APIError.NotFound)
-    except:
-        return apiError(APIError.Error)
-
 
 @V1.route('images/<image_id>/bitmap', methods=['GET'])
 def get_image_bitmap(image_id):
@@ -173,7 +121,7 @@ def get_image_bitmap(image_id):
         # read get_image_bitmap parameter and check its constraints
         image_id = int(image_id)
     except ValueError:
-        return apiError(APIError.InvalidArgument, 'image_id is of type \'{}\', but should be an uint.)'.format(image_id))
+        return json.dumps({'error': 'the value has the wrong type'}), 500
     try:
         # Construct url from params
         image = Image.get_by_id(image_id)
@@ -186,10 +134,8 @@ def get_image_bitmap(image_id):
             response.headers.items()
         ))
         return response.content, 200, headers
-    except Image.DoesNotExist:
-        return apiError(APIError.NotFound)
     except:
-        return apiError(APIError.Error)
+        return json.dumps({'error': 'An error occured'}), 500
 
 
 @V1.route('/images/fetch', methods=['POST'])
