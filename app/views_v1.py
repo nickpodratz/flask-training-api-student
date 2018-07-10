@@ -114,6 +114,38 @@ def get_answers():
 #
 # You can access GET arguments by request.args.get('key', 'default') where request is a global object defined by Flask
 
+@V1.route('/images', methods=['GET'])
+def get_image_paginated():
+    limit = int(request.args.get('limit', '100'));
+    if limit < 1 or limit > 500:
+        return json.dumps({'error': 'page index out of bounds.'}), 400
+    try:
+        offset = int(request.args.get('offset', '0'));
+    except ValueError:
+        return json.dumps({'error': 'image id should be an integer.'}), 400
+
+    count =  Image.select().count()
+    images = Image.select().order_by(Image.id).limit(limit).offset(offset)
+
+    return json.dumps({
+        'images': [],  # serialization of 'images' not yet working
+        'count': count
+    }), 200
+
+
+@V1.route('images/<image_id>', methods=['GET'])
+def get_image_metadata(image_id):
+    try:
+        image_id = int(image_id)
+    except ValueError:
+        return json.dumps({'error': 'image_id cannot be converted into an integer.'}), 400
+    try:
+        image = Image.get_by_id(image_id)
+        return json.dumps(image), 200
+    except:
+        return json.dumps({'error': 'There is no image with the id \'{}\'.'.format(image_id)}), 500
+
+
 
 @V1.route('images/<image_id>/bitmap', methods=['GET'])
 def get_image_bitmap(image_id):
