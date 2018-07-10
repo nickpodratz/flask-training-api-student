@@ -2,7 +2,7 @@
 # pylint: disable=fixme
 
 # **It took me ? hours to solve this assignment.**
-# Solved by (Matrikelnummern): Person 1, Person 2
+# Solved by (Matrikelnummern): 785812, Person 2
 
 
 import json
